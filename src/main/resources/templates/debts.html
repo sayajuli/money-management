@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Utang - KeuanganKu</title>
+
+    <!-- Bootstrap CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm position-sticky top-0 z-3">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" th:href="@{/dashboard}">💰 KeuanganKu</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" th:href="@{/dashboard}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/transactions}">Transaksi</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/assets}">Aset</a></li>
+                    <li class="nav-item"><a class="nav-link active" th:href="@{/debts}">Utang</a></li>
+                </ul>
+                <div class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> Halo, <strong sec:authentication="name">User</strong>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" th:href="@{/profile}">Profil Saya</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form th:action="@{/logout}" method="post" class="d-flex px-3">
+                                    <button class="btn btn-danger btn-sm w-100" type="submit">Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Konten Utama -->
+    <main class="container my-4">
+        <h2 class="mb-4">Manajemen Utang</h2>
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+        <!-- Form Filter -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form th:action="@{/debts}" method="get" class="row g-3 align-items-center">
+                    <div class="col-auto"><label for="statusFilter" class="form-label fw-bold">Filter Status:</label>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="statusFilter" name="status">
+                            <option value="">Semua Status</option>
+                            <option th:each="statusOpt : ${debtStatuses}" th:value="${statusOpt}"
+                                th:text="${statusOpt.name()}" th:selected="${statusOpt == selectedStatus}"></option>
+                        </select>
+                    </div>
+                    <div class="col-auto"><button type="submit" class="btn btn-primary">Filter</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Kolom Form Tambah Utang -->
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-bold">Tambah Utang Baru</div>
+                    <div class="card-body">
+                        <form th:action="@{/debts/add}" method="post" th:object="${debt}">
+                            <div class="mb-3">
+                                <label for="lenderName" class="form-label">Nama Pemberi Pinjaman</label>
+                                <input type="text" class="form-control" id="lenderName" th:field="*{lenderName}"
+                                    placeholder="Contoh: Bank A, Teman" required>
+                                <div class="text-danger" th:if="${#fields.hasErrors('lenderName')}"
+                                    th:errors="*{lenderName}"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="initialAmount" class="form-label">Jumlah Awal Utang (Rp)</label>
+                                <input type="number" step="0.01" class="form-control" id="initialAmount"
+                                    th:field="*{initialAmount}" required>
+                                <div class="text-danger" th:if="${#fields.hasErrors('initialAmount')}"
+                                    th:errors="*{initialAmount}"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dueDate" class="form-label">Tanggal Jatuh Tempo</label>
+                                <input type="date" class="form-control" id="dueDate" th:field="*{dueDate}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('dueDate')}" th:errors="*{dueDate}">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Simpan Utang</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kolom Tabel Utang -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-bold">Daftar Utang</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Pemberi Pinjaman</th>
+                                        <th>Jumlah Awal</th>
+                                        <th>Sisa Utang</th>
+                                        <th>Jatuh Tempo</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="debt : ${debts}">
+                                        <td class="fw-medium" th:text="${debt.lenderName}"></td>
+                                        <td th:text="${#numbers.formatCurrency(debt.initialAmount)}"></td>
+                                        <td class="fw-bold" th:text="${#numbers.formatCurrency(debt.remainingAmount)}">
+                                        </td>
+                                        <td
+                                            th:text="${debt.dueDate != null ? #temporals.format(debt.dueDate, 'dd MMM yyyy') : '-'}">
+                                        </td>
+                                        <td>
+                                            <!-- ===== PERBAIKAN DI SINI ===== -->
+                                            <!-- Menambahkan null check 'debt.status != null' -->
+                                            <span th:if="${debt.status != null}" class="badge"
+                                                th:classappend="${debt.status.name() == 'ACTIVE'} ? 'text-bg-warning' : 'text-bg-success'"
+                                                th:text="${debt.status.name()}"></span>
+                                            <span th:unless="${debt.status != null}"
+                                                class="badge text-bg-secondary">N/A</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <button type="button" class="btn btn-success btn-sm me-1"
+                                                    data-bs-toggle="modal" data-bs-target="#paymentModal"
+                                                    th:if="${debt.status.name() == 'ACTIVE'}" th:attr="data-debt-id=${debt.id}, 
+                                                                 data-debt-name=${debt.lenderName},
+                                                                 data-debt-remaining=${debt.remainingAmount}">
+                                                    <i class="bi bi-cash-coin"></i> Bayar
+                                                </button>
+                                                <a th:href="@{/debts/edit/{id}(id=${debt.id})}"
+                                                    class="btn btn-warning btn-sm me-1"><i
+                                                        class="bi bi-pencil-square"></i></a>
+                                                <form th:action="@{/debts/delete/{id}(id=${debt.id})}" method="post"
+                                                    class="d-inline"
+                                                    onsubmit="return confirm('Yakin ingin menghapus utang ini?');">
+                                                    <button type="submit" class="btn btn-danger btn-sm"><i
+                                                            class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(debts)}">
+                                        <td colspan="6" class="text-center">Tidak ada utang yang tercatat.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Catat Pembayaran Utang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form th:action="@{/debts/pay}" method="post">
+                    <div class="modal-body">
+                        <p>Mencatat pembayaran untuk utang kepada: <strong id="modalDebtName"></strong></p>
+
+                        <!-- Input tersembunyi untuk mengirim ID utang -->
+                        <input type="hidden" name="debtId" id="modalDebtId">
+
+                        <div class="mb-3">
+                            <label for="modalAmount" class="form-label">Jumlah Pembayaran (Rp)</label>
+                            <input type="number" step="0.01" class="form-control" id="modalAmount" name="amount"
+                                required>
+                        </div>
+                        <div class="form-text">
+                            Sisa utang saat ini: <span id="modalRemainingAmount" class="fw-bold"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan Pembayaran</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/debtsPayment.js}"></script>
+</body>
+
+</html>
