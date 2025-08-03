@@ -13,11 +13,8 @@ import com.finance.management.model.TransactionType;
 @Data
 public class TransactionDto {
 
-    // Tidak perlu ID, karena ini untuk data baru.
-    // Tidak perlu User, karena akan diambil dari sesi login di service.
-
     @NotNull(message = "Tipe transaksi tidak boleh kosong")
-    private TransactionType type; // Akan berupa dropdown INCOME atau EXPENSE di form
+    private TransactionType type;
 
     @NotNull(message = "Jumlah tidak boleh kosong")
     @Positive(message = "Jumlah harus lebih dari nol")
@@ -26,7 +23,7 @@ public class TransactionDto {
     @NotBlank(message = "Kategori tidak boleh kosong")
     private String category;
 
-    private String description; // Deskripsi bersifat opsional
+    private String description;
 
     @NotNull(message = "Tanggal transaksi tidak boleh kosong")
     @PastOrPresent(message = "Tanggal tidak boleh di masa depan")

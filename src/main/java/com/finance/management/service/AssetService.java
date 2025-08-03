@@ -90,27 +90,22 @@ public class AssetService {
         BigDecimal amountSpent = assetData.getCurrentValue();
 
         if (existingAssetOpt.isPresent()) {
-            // ASET SUDAH ADA -> UPDATE
             Asset existingAsset = existingAssetOpt.get();
             BigDecimal difference = assetData.getCurrentValue().subtract(existingAsset.getCurrentValue());
 
-            // Hanya catat sebagai pengeluaran jika nilainya bertambah (top-up)
             if (difference.compareTo(BigDecimal.ZERO) > 0) {
-                amountSpent = difference; // Pengeluaran adalah selisihnya
+                amountSpent = difference;
                 existingAsset.setCurrentValue(assetData.getCurrentValue());
                 assetRepository.save(existingAsset);
             } else {
-                // Jika nilai berkurang atau sama, tidak ada pengeluaran
                 amountSpent = BigDecimal.ZERO;
             }
 
         } else {
-            // ASET BARU -> CREATE
             assetData.setUser(user);
             assetRepository.save(assetData);
         }
 
-        // Buat transaksi pengeluaran jika ada uang yang dihabiskan
         if (amountSpent.compareTo(BigDecimal.ZERO) > 0) {
             Transaction expense = new Transaction();
             expense.setAmount(amountSpent);
@@ -118,7 +113,7 @@ public class AssetService {
             expense.setDescription("Investasi/pembelian untuk: " + assetData.getName());
             expense.setType(TransactionType.EXPENSE);
             expense.setTransactionDate(LocalDate.now());
-            transactionService.createTransaction(expense, username); // Panggil TransactionService
+            transactionService.createTransaction(expense, username);
         }
 
         return assetData;
@@ -126,7 +121,7 @@ public class AssetService {
 
     @Transactional
     public void updateAsset(Long id, Asset updatedAssetData, String username) {
-        Asset existingAsset = getAssetByIdAndUsername(id, username); // Validasi kepemilikan
+        Asset existingAsset = getAssetByIdAndUsername(id, username);
 
         existingAsset.setName(updatedAssetData.getName());
         existingAsset.setType(updatedAssetData.getType());
@@ -142,7 +137,6 @@ public class AssetService {
 
         Asset cashAsset = assetRepository.findByNameAndUser(DEFAULT_CASH_ASSET_NAME, user)
                 .orElseGet(() -> {
-                    // Buat aset kas baru jika belum ada
                     Asset newCashAsset = new Asset();
                     newCashAsset.setName(DEFAULT_CASH_ASSET_NAME);
                     newCashAsset.setType(AssetType.CASH);
@@ -159,7 +153,6 @@ public class AssetService {
     public void withdrawFromCash(BigDecimal amount, String username) {
         User user = userRepository.findByUsername(username).orElseThrow();
 
-        // Cari aset Kas Tunai
         Asset cashAsset = assetRepository.findByNameAndUser(DEFAULT_CASH_ASSET_NAME, user)
                 .orElseGet(() -> {
                     // Jika belum ada, buat baru (meskipun aneh jika pengeluaran terjadi tanpa kas)
@@ -171,7 +164,6 @@ public class AssetService {
                     return newCashAsset;
                 });
 
-        // Kurangi nilainya
         cashAsset.setCurrentValue(cashAsset.getCurrentValue().subtract(amount));
         assetRepository.save(cashAsset);
     }

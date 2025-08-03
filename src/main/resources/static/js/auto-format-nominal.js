@@ -1,24 +1,43 @@
 function formatNumber(n) {
-  return n.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const cleaned = n.toString().replace(/\D/g, '');
+    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function setupNominalInputs() {
-  const nominalInputs = document.querySelectorAll('.nominal-input');
+    const nominalInputs = document.querySelectorAll('.nominal-input');
 
-  nominalInputs.forEach(input => {
-    if(input.value) {
-      input.value = formatNumber(input.value);
-    }
+    nominalInputs.forEach(input => {
+        if (input.value) {
+            input.value = formatNumber(input.value);
+        }
+        input.removeEventListener('input', handleInputFormatting);
+        input.addEventListener('input', handleInputFormatting);
 
-    input.addEventListener('input', (e) => {
-      e.target.value = formatNumber(e.target.value);
+        const parentForm = input.closest('form');
+        if (parentForm) {
+            parentForm.removeEventListener('submit', handleFormSubmit);
+            parentForm.addEventListener('submit', () => handleFormSubmit(input));
+        }
     });
-
-    const parentForm = input.closest('form');
-    if(parentForm) {
-      parentForm.addEventListener('submit', () => {
-        input.value = input.value.replace(/\./g, '');
-      });
-    }
-  });
 }
+
+function handleInputFormatting(e) {
+    const originalCursorPosition = e.target.selectionStart;
+    const originalLength = e.target.value.length;
+
+    const formattedValue = formatNumber(e.target.value);
+    e.target.value = formattedValue;
+
+    const newLength = formattedValue.length;
+    const newCursorPosition = originalCursorPosition + (newLength - originalLength);
+    e.target.selectionStart = e.target.selectionEnd = newCursorPosition;
+}
+
+function handleFormSubmit(inputElement) {
+    if (inputElement && inputElement.value) {
+        const unformattedValue = inputElement.value.replace(/\./g, '');
+        inputElement.value = unformattedValue;
+    }
+}
+
+window.addEventListener('load', setupNominalInputs);

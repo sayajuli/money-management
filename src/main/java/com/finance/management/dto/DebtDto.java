@@ -17,8 +17,5 @@ public class DebtDto {
   @Positive(message = "Jumlah utang harus positif")
   private BigDecimal initialAmount;
 
-  private LocalDate dueDate; // Tanggal jatuh tempo bersifat opsional
-
-  // Field seperti `remainingAmount` dan `status` tidak ada di sini
-  // karena akan diatur secara otomatis oleh Service saat utang dibuat.
+  private LocalDate dueDate;
 }

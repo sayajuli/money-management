@@ -14,7 +14,6 @@ public class PasswordChangeDto {
   @NotEmpty(message = "Konfirmasi password tidak boleh kosong")
   private String confirmPassword;
 
-  // Getters and Setters
   public String getOldPassword() {
     return oldPassword;
   }

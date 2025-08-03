@@ -20,20 +20,14 @@ public class FinancialHealthService {
     @Autowired
     private DebtService debtService;
 
-    /**
-     * Menghitung Rasio Utang terhadap Aset dan memberikan statusnya.
-     * Versi ini sudah aman dari NullPointerException.
-     */
     public HealthMetric calculateDebtToAssetRatio(String username) {
-        // Ambil data, dan langsung beri nilai default 0 jika null
         BigDecimal totalAssets = Objects.requireNonNullElse(assetService.getTotalAssetValue(username), BigDecimal.ZERO);
-        BigDecimal totalDebts = Objects.requireNonNullElse(debtService.getTotalRemainingDebt(username), BigDecimal.ZERO);
+        BigDecimal totalDebts = Objects.requireNonNullElse(debtService.getTotalRemainingDebt(username),
+                BigDecimal.ZERO);
 
-        // Menghindari pembagian dengan nol
         if (totalAssets.compareTo(BigDecimal.ZERO) == 0) {
-            return totalDebts.compareTo(BigDecimal.ZERO) == 0 ?
-                   new HealthMetric(BigDecimal.ZERO, "Sehat", "bg-success") :
-                   new HealthMetric(BigDecimal.ONE, "Berisiko", "bg-danger");
+            return totalDebts.compareTo(BigDecimal.ZERO) == 0 ? new HealthMetric(BigDecimal.ZERO, "Sehat", "bg-success")
+                    : new HealthMetric(BigDecimal.ONE, "Berisiko", "bg-danger");
         }
 
         BigDecimal ratio = totalDebts.divide(totalAssets, 4, RoundingMode.HALF_UP);
@@ -47,16 +41,12 @@ public class FinancialHealthService {
         }
     }
 
-    /**
-     * Menghitung Tingkat Tabungan (Savings Rate) dan memberikan statusnya.
-     * Versi ini sudah aman dari NullPointerException.
-     */
     public HealthMetric calculateSavingsRate(String username) {
-        // Ambil data, dan langsung beri nilai default 0 jika null
-        BigDecimal totalIncome = Objects.requireNonNullElse(transactionService.getTotalIncome(username), BigDecimal.ZERO);
-        BigDecimal totalExpense = Objects.requireNonNullElse(transactionService.getTotalExpense(username), BigDecimal.ZERO);
+        BigDecimal totalIncome = Objects.requireNonNullElse(transactionService.getTotalIncome(username),
+                BigDecimal.ZERO);
+        BigDecimal totalExpense = Objects.requireNonNullElse(transactionService.getTotalExpense(username),
+                BigDecimal.ZERO);
 
-        // Menghindari pembagian dengan nol
         if (totalIncome.compareTo(BigDecimal.ZERO) == 0) {
             return new HealthMetric(BigDecimal.ZERO, "N/A", "bg-secondary");
         }

@@ -22,7 +22,6 @@ public class AssetController {
   @Autowired
   private AssetService assetService;
 
-  // Method GET diperbarui untuk menangani filter
   @GetMapping
   public String showAssetPage(@RequestParam(required = false) AssetType type, Model model, Principal principal) {
     String username = principal.getName();
@@ -35,7 +34,7 @@ public class AssetController {
     }
 
     model.addAttribute("assets", assets);
-    model.addAttribute("assetTypes", AssetType.values()); // Untuk dropdown filter
+    model.addAttribute("assetTypes", AssetType.values());
     model.addAttribute("selectedType", type);
 
     if (!model.containsAttribute("asset")) {
@@ -45,27 +44,23 @@ public class AssetController {
     return "assets";
   }
 
-  // Method POST untuk menambah aset (tidak berubah, tapi disesuaikan objectnya)
   @PostMapping("/add")
   public String addAsset(@Valid @ModelAttribute("asset") Asset asset,
       BindingResult result,
       Principal principal,
       RedirectAttributes redirectAttributes) {
     if (result.hasErrors()) {
-      // Jika validasi gagal, kembali ke form dengan pesan error
       redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.asset", result);
       redirectAttributes.addFlashAttribute("asset", asset);
       return "redirect:/assets";
     }
 
-    // Memanggil method baru yang cerdas: addOrUpdateAsset
     assetService.addOrUpdateAsset(asset, principal.getName());
 
     redirectAttributes.addFlashAttribute("successMessage", "Aset berhasil dicatat dan transaksi pengeluaran dibuat!");
     return "redirect:/assets";
   }
 
-  // == METHOD BARU UNTUK MENAMPILKAN HALAMAN EDIT ==
   @GetMapping("/edit/{id}")
   public String showEditAssetForm(@PathVariable Long id, Model model, Principal principal) {
     Asset asset = assetService.getAssetByIdAndUsername(id, principal.getName());
@@ -73,7 +68,6 @@ public class AssetController {
     return "edit-asset";
   }
 
-  // == METHOD BARU UNTUK MEMPROSES UPDATE ==
   @PostMapping("/update/{id}")
   public String updateAsset(@PathVariable Long id,
       @Valid @ModelAttribute("asset") Asset asset,
@@ -81,7 +75,7 @@ public class AssetController {
       Principal principal,
       RedirectAttributes redirectAttributes) {
     if (result.hasErrors()) {
-      asset.setId(id); // Pastikan ID tidak hilang saat kembali ke form
+      asset.setId(id);
       return "edit-asset";
     }
     assetService.updateAsset(id, asset, principal.getName());

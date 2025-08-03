@@ -22,6 +22,7 @@
                     <li class="nav-item"><a class="nav-link active" th:href="@{/transactions}">Transaksi</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/assets}">Aset</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/debts}">Utang</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/reports}">Laporan</a></li>
                 </ul>
                 <div class="navbar-nav">
                     <li class="nav-item dropdown">
@@ -55,17 +56,37 @@
         <!-- Form Filter -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <form th:action="@{/transactions}" method="get" class="row g-3 align-items-center">
-                    <div class="col-auto"><label for="categoryFilter" class="form-label fw-bold">Filter
-                            Kategori:</label></div>
+                <form th:action="@{/transactions}" method="get" class="row g-3 align-items-end">
+                    <!-- Filter Bulan -->
+                    <div class="col-md-3">
+                        <label for="monthFilter" class="form-label fw-bold">Bulan:</label>
+                        <select class="form-select" id="monthFilter" name="month">
+                            <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}"
+                                th:text="${#temporals.format(#temporals.create(2000, m, 1, 0, 0), 'MMMM')}"
+                                th:selected="${m == selectedMonth}"></option>
+                        </select>
+                    </div>
+                    <!-- Filter Tahun -->
+                    <div class="col-md-3">
+                        <label for="yearFilter" class="form-label fw-bold">Tahun:</label>
+                        <select class="form-select" id="yearFilter" name="year">
+                            <option th:each="y : ${years}" th:value="${y}" th:text="${y}"
+                                th:selected="${y == selectedYear}"></option>
+                        </select>
+                    </div>
+                    <!-- Filter Kategori -->
                     <div class="col-md-4">
+                        <label for="categoryFilter" class="form-label fw-bold">Kategori:</label>
                         <select class="form-select" id="categoryFilter" name="category">
                             <option value="">Semua Kategori</option>
                             <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"
                                 th:selected="${cat == selectedCategory}"></option>
                         </select>
                     </div>
-                    <div class="col-auto"><button type="submit" class="btn btn-primary">Filter</button></div>
+                    <!-- Tombol Filter -->
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -182,23 +203,21 @@
                                 <!-- Tombol Previous -->
                                 <li class="page-item" th:classappend="${transactionPage.first} ? 'disabled'">
                                     <a class="page-link"
-                                        th:href="@{/transactions(page=${transactionPage.number}, category=${selectedCategory})}">
+                                        th:href="@{/transactions(page=${transactionPage.number}, category=${selectedCategory}, month=${selectedMonth}, year=${selectedYear})}">
                                         <span>&laquo;</span>
                                     </a>
                                 </li>
-
                                 <!-- Tombol Halaman -->
                                 <li class="page-item" th:each="i : ${#numbers.sequence(1, transactionPage.totalPages)}"
                                     th:classappend="${i == transactionPage.number + 1} ? 'active'">
                                     <a class="page-link"
-                                        th:href="@{/transactions(page=${i}, category=${selectedCategory})}"
+                                        th:href="@{/transactions(page=${i}, category=${selectedCategory}, month=${selectedMonth}, year=${selectedYear})}"
                                         th:text="${i}"></a>
                                 </li>
-
                                 <!-- Tombol Next -->
                                 <li class="page-item" th:classappend="${transactionPage.last} ? 'disabled'">
                                     <a class="page-link"
-                                        th:href="@{/transactions(page=${transactionPage.number + 2}, category=${selectedCategory})}">
+                                        th:href="@{/transactions(page=${transactionPage.number + 2}, category=${selectedCategory}, month=${selectedMonth}, year=${selectedYear})}">
                                         <span>&raquo;</span>
                                     </a>
                                 </li>
@@ -235,8 +254,8 @@
     </div>
 
     <!-- JavaScript -->
-    <script th:src="@{/js/auto-format-nominal.js}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/auto-format-nominal.js}"></script>
     <script th:src="@{/js/transactions.js}"></script>
 </body>
 

@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Meminta data dari API endpoint yang kita buat
   fetch('/api/expense-summary')
     .then(response => response.json())
     .then(data => {
@@ -7,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const labels = Object.keys(data);
       const values = Object.values(data);
 
-      // Jika tidak ada data pengeluaran, tampilkan pesan
       if (labels.length === 0) {
         ctx.font = "16px sans-serif";
         ctx.textAlign = "center";
@@ -15,9 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      // Buat grafik baru menggunakan Chart.js
       new Chart(ctx, {
-        type: 'pie', // Tipe grafik: donat
+        type: 'pie',
         data: {
           labels: labels,
           datasets: [{
@@ -34,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'top', // Posisi legenda
+              position: 'top',
             },
             title: {
               display: false,

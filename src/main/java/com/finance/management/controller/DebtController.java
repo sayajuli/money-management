@@ -37,8 +37,6 @@ public class DebtController {
         model.addAttribute("debts", debts);
         model.addAttribute("debtStatuses", DebtStatus.values());
         model.addAttribute("selectedStatus", status);
-
-        // Selalu siapkan objek baru untuk form tambah
         model.addAttribute("debt", new Debt());
 
         return "debts";
@@ -50,8 +48,6 @@ public class DebtController {
             Principal principal,
             RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
-            // Jika validasi gagal, kita perlu menyiapkan model lagi untuk halaman debts
-            // Cara termudah adalah redirect kembali dengan error
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.debt", result);
             redirectAttributes.addFlashAttribute("debt", debt);
             return "redirect:/debts";
@@ -73,13 +69,13 @@ public class DebtController {
     public String updateDebt(@PathVariable Long id,
             @Valid @ModelAttribute("debt") Debt debt,
             BindingResult result,
-            Model model, // Tambahkan model untuk mengirim data kembali jika error
+            Model model,
             Principal principal,
             RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
-            debt.setId(id); // Pastikan ID tidak hilang
-            model.addAttribute("debtStatuses", DebtStatus.values()); // Kirim lagi status untuk dropdown
-            return "edit-debt"; // Kembali ke halaman edit dengan pesan error
+            debt.setId(id);
+            model.addAttribute("debtStatuses", DebtStatus.values());
+            return "edit-debt";
         }
         debtService.updateDebt(id, debt, principal.getName());
         redirectAttributes.addFlashAttribute("successMessage", "Utang berhasil diperbarui!");

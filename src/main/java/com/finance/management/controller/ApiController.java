@@ -14,11 +14,11 @@ import com.finance.management.service.TransactionService;
 @RestController
 @RequestMapping("/api")
 public class ApiController {
-    @Autowired
-    private TransactionService transactionService;
+  @Autowired
+  private TransactionService transactionService;
 
-    @GetMapping("/expense-summary")
-    public Map<String, BigDecimal> getExpenseSummary(Principal principal) {
-      return transactionService.getExpenseSummaryByCategory(principal.getName());
-    }
+  @GetMapping("/expense-summary")
+  public Map<String, BigDecimal> getExpenseSummary(Principal principal) {
+    return transactionService.getExpenseSummaryByCategory(principal.getName());
+  }
 }

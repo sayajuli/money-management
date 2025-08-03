@@ -28,30 +28,21 @@ public class ProfileController {
   @Autowired
   private UserService userService;
 
-  /**
-   * Menampilkan halaman profil utama.
-   */
   @GetMapping
   public String showProfilePage(Model model, Principal principal) {
     User user = userRepository.findByUsername(principal.getName()).orElseThrow();
     model.addAttribute("user", user);
-    // Menyiapkan objek kosong untuk form ubah password
     model.addAttribute("passwordChangeDto", new PasswordChangeDto());
-    return "profile"; // Mengembalikan file profile.html
+    return "profile";
   }
 
-  /**
-   * Memproses permintaan untuk mengubah password.
-   */
   @PostMapping("/change-password")
   public String changePassword(@Valid @ModelAttribute("passwordChangeDto") PasswordChangeDto dto,
       BindingResult result,
       Principal principal,
       RedirectAttributes redirectAttributes) {
 
-    // Jika ada error validasi dasar (misal: field kosong)
     if (result.hasErrors()) {
-      // Menggunakan flash attributes untuk mengirim error kembali ke halaman profil
       redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.passwordChangeDto", result);
       redirectAttributes.addFlashAttribute("passwordChangeDto", dto);
       return "redirect:/profile";
@@ -61,7 +52,6 @@ public class ProfileController {
       userService.changePassword(principal.getName(), dto);
       redirectAttributes.addFlashAttribute("successMessage", "Password berhasil diubah!");
     } catch (IllegalArgumentException e) {
-      // Menangkap error dari service (misal: password lama salah)
       redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
       redirectAttributes.addFlashAttribute("passwordChangeDto", dto);
     }

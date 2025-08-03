@@ -32,28 +32,22 @@ public class DebtService {
 
     @Transactional
     public void makePayment(Long debtId, BigDecimal paymentAmount, String username) {
-        // 1. Validasi jumlah pembayaran
         if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Jumlah pembayaran harus lebih dari nol.");
         }
 
-        // 2. Ambil data utang dari DB, sekaligus validasi kepemilikan
         Debt debt = getDebtByIdAndUsername(debtId, username);
 
-        // 3. Kurangi sisa utang
         BigDecimal newRemainingAmount = debt.getRemainingAmount().subtract(paymentAmount);
         debt.setRemainingAmount(newRemainingAmount);
 
-        // 4. Jika lunas, update statusnya
         if (newRemainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            debt.setRemainingAmount(BigDecimal.ZERO); // Jangan sampai minus
+            debt.setRemainingAmount(BigDecimal.ZERO);
             debt.setStatus(DebtStatus.PAID);
         }
 
-        // 5. Simpan perubahan pada utang
         debtRepository.save(debt);
 
-        // 6. Buat transaksi pengeluaran baru secara otomatis
         Transaction paymentTransaction = new Transaction();
         paymentTransaction.setAmount(paymentAmount);
         paymentTransaction.setCategory("Pembayaran Utang");
@@ -61,7 +55,6 @@ public class DebtService {
         paymentTransaction.setType(TransactionType.EXPENSE);
         paymentTransaction.setTransactionDate(LocalDate.now());
 
-        // Panggil TransactionService untuk menyimpan transaksi ini
         transactionService.createTransaction(paymentTransaction, username);
     }
 
@@ -76,9 +69,8 @@ public class DebtService {
         debt.setInitialAmount(debtDto.getInitialAmount());
         debt.setDueDate(debtDto.getDueDate());
 
-        // Logika bisnis: saat utang dibuat, sisa utang sama dengan jumlah awal
         debt.setRemainingAmount(debtDto.getInitialAmount());
-        debt.setStatus(DebtStatus.ACTIVE); // Status awal selalu aktif
+        debt.setStatus(DebtStatus.ACTIVE);
 
         return debtRepository.save(debt);
     }
@@ -89,7 +81,6 @@ public class DebtService {
         return debtRepository.findByUserId(user.getId());
     }
 
-    // == LOGIKA BARU UNTUK FILTER ==
     public List<Debt> getDebtsByStatus(String username, DebtStatus status) {
         User user = userRepository.findByUsername(username).orElseThrow();
         return debtRepository.findByUserId(user.getId()).stream()
@@ -97,7 +88,6 @@ public class DebtService {
                 .collect(Collectors.toList());
     }
 
-    // == LOGIKA BARU UNTUK EDIT ==
     @Transactional(readOnly = true)
     public Debt getDebtByIdAndUsername(Long id, String username) {
         Debt debt = debtRepository.findById(id)
@@ -110,11 +100,11 @@ public class DebtService {
 
     @Transactional
     public void updateDebt(Long id, Debt updatedDebtData, String username) {
-        Debt existingDebt = getDebtByIdAndUsername(id, username); // Validasi kepemilikan
+        Debt existingDebt = getDebtByIdAndUsername(id, username);
 
         existingDebt.setLenderName(updatedDebtData.getLenderName());
         existingDebt.setInitialAmount(updatedDebtData.getInitialAmount());
-        existingDebt.setRemainingAmount(updatedDebtData.getRemainingAmount()); // Penting jika ingin edit sisa utang
+        existingDebt.setRemainingAmount(updatedDebtData.getRemainingAmount());
         existingDebt.setDueDate(updatedDebtData.getDueDate());
         existingDebt.setStatus(updatedDebtData.getStatus());
 
@@ -126,8 +116,8 @@ public class DebtService {
                 .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
 
         return debtRepository.findByUserId(user.getId()).stream()
-                .map(Debt::getRemainingAmount) // Ambil sisa utang
-                .reduce(BigDecimal.ZERO, BigDecimal::add); // Jumlahkan
+                .map(Debt::getRemainingAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public void deleteDebt(Long id, String username) {

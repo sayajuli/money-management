@@ -45,13 +45,13 @@ public class SecurityConfig {
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/register", "/login").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
-                        .loginPage("/login") // Halaman login kustom
-                        .loginProcessingUrl("/login") // URL yang diproses oleh Spring Security
-                        .defaultSuccessUrl("/dashboard", true) // Halaman tujuan setelah login berhasil
+                        .loginPage("/login")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/dashboard", true)
                         .permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout") // Halaman tujuan setelah logout
+                        .logoutSuccessUrl("/login?logout")
                         .permitAll());
         return http.build();
     }

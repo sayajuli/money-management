@@ -17,27 +17,31 @@ import java.util.Objects;
 @Controller
 public class DashboardController {
 
-    @Autowired private AssetService assetService;
-    @Autowired private DebtService debtService;
-    @Autowired private TransactionService transactionService;
-    @Autowired private FinancialHealthService financialHealthService;
+    @Autowired
+    private AssetService assetService;
+    @Autowired
+    private DebtService debtService;
+    @Autowired
+    private TransactionService transactionService;
+    @Autowired
+    private FinancialHealthService financialHealthService;
 
-    @GetMapping({"/", "/dashboard"})
+    @GetMapping({ "/", "/dashboard" })
     public String showDashboard(Model model, Principal principal) {
         String username = principal.getName();
 
-        // Mengambil Data Total
         BigDecimal totalAset = Objects.requireNonNullElse(assetService.getTotalAssetValue(username), BigDecimal.ZERO);
-        BigDecimal totalUtang = Objects.requireNonNullElse(debtService.getTotalRemainingDebt(username), BigDecimal.ZERO);
-        BigDecimal totalPemasukanBulanIni = Objects.requireNonNullElse(transactionService.getIncomeForCurrentMonth(username), BigDecimal.ZERO);
-        BigDecimal totalPengeluaranBulanIni = Objects.requireNonNullElse(transactionService.getExpenseForCurrentMonth(username), BigDecimal.ZERO);
+        BigDecimal totalUtang = Objects.requireNonNullElse(debtService.getTotalRemainingDebt(username),
+                BigDecimal.ZERO);
+        BigDecimal totalPemasukanBulanIni = Objects
+                .requireNonNullElse(transactionService.getIncomeForCurrentMonth(username), BigDecimal.ZERO);
+        BigDecimal totalPengeluaranBulanIni = Objects
+                .requireNonNullElse(transactionService.getExpenseForCurrentMonth(username), BigDecimal.ZERO);
         BigDecimal kekayaanBersih = totalAset.subtract(totalUtang);
 
-        // Mengambil Data Analisis
         HealthMetric debtToAssetMetric = financialHealthService.calculateDebtToAssetRatio(username);
         HealthMetric savingsRateMetric = financialHealthService.calculateSavingsRate(username);
 
-        // Mengirim Semua Data ke View
         model.addAttribute("totalAset", totalAset);
         model.addAttribute("totalUtang", totalUtang);
         model.addAttribute("totalPemasukanBulanIni", totalPemasukanBulanIni);

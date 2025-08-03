@@ -12,7 +12,16 @@ import java.util.List;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     Page<Transaction> findByUserId(Long userId, Pageable pageable);
+
     Page<Transaction> findByUserIdAndCategory(Long userId, String category, Pageable pageable);
+
+    Page<Transaction> findByUserIdAndTransactionDateBetween(Long userId, LocalDate startDate, LocalDate endDate,
+            Pageable pageable);
+
+    Page<Transaction> findByUserIdAndCategoryAndTransactionDateBetween(Long userId, String category,
+            LocalDate startDate, LocalDate endDate, Pageable pageable);
+
     List<Transaction> findAllByUserId(Long userId);
+
     List<Transaction> findAllByUserIdAndTransactionDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
 }

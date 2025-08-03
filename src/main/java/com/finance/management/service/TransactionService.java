@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,26 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize, Sort.by("transactionDate").descending());
         return transactionRepository.findByUserIdAndCategory(user.getId(), category, pageable);
+    }
+
+    public Page<Transaction> findPaginatedByMonth(String username, int year, int month, String category, int pageNo,
+            int pageSize) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize, Sort.by("transactionDate").descending());
+
+        if (category != null && !category.isEmpty()) {
+            return transactionRepository.findByUserIdAndCategoryAndTransactionDateBetween(user.getId(), category,
+                    startDate, endDate, pageable);
+        } else {
+            return transactionRepository.findByUserIdAndTransactionDateBetween(user.getId(), startDate, endDate,
+                    pageable);
+        }
     }
 
     public BigDecimal getIncomeForCurrentMonth(String username) {
@@ -109,12 +130,9 @@ public class TransactionService {
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        // LOGIKA OTOMATISASI:
         if (savedTransaction.getType() == TransactionType.INCOME) {
-            // Jika PEMASUKAN, tambahkan ke kas
             assetService.depositToCash(savedTransaction.getAmount(), username);
         } else if (savedTransaction.getType() == TransactionType.EXPENSE) {
-            // Jika PENGELUARAN, kurangi dari kas
             assetService.withdrawFromCash(savedTransaction.getAmount(), username);
         }
 
@@ -129,6 +147,17 @@ public class TransactionService {
             throw new AccessDeniedException("Anda tidak memiliki izin untuk mengakses transaksi ini.");
         }
         return transaction;
+    }
+
+    public List<Transaction> getTransactionsForMonth(String username, int year, int month) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        return transactionRepository.findAllByUserIdAndTransactionDateBetween(user.getId(), startDate, endDate);
     }
 
     @Transactional

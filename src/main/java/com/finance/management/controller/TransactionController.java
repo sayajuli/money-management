@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Controller
 @RequestMapping("/transactions")
@@ -22,23 +26,31 @@ public class TransactionController {
 
     @GetMapping
     public String showTransactionPage(@RequestParam(required = false) String category,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
             @RequestParam(defaultValue = "1") int page,
             Model model,
             Principal principal) {
         String username = principal.getName();
-        int pageSize = 10; // Jumlah data per halaman
+        int pageSize = 10;
+
+        int currentMonth = (month == null) ? LocalDate.now().getMonthValue() : month;
+        int currentYear = (year == null) ? LocalDate.now().getYear() : year;
 
         Page<Transaction> transactionPage;
 
-        if (category != null && !category.isEmpty()) {
-            transactionPage = transactionService.findPaginatedByCategory(username, category, page, pageSize);
-            model.addAttribute("selectedCategory", category);
-        } else {
-            transactionPage = transactionService.findPaginated(username, page, pageSize);
-        }
+        transactionPage = transactionService.findPaginatedByMonth(username, currentYear, currentMonth, category, page,
+                pageSize);
 
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("categories", transactionService.getUniqueCategories(username));
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedMonth", currentMonth);
+        model.addAttribute("selectedYear", currentYear);
+
+        List<Integer> years = IntStream.rangeClosed(LocalDate.now().getYear() - 5, LocalDate.now().getYear())
+                .boxed().sorted((a, b) -> b.compareTo(a)).collect(Collectors.toList());
+        model.addAttribute("years", years);
 
         if (!model.containsAttribute("transaction")) {
             model.addAttribute("transaction", new Transaction());

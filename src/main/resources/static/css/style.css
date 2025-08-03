@@ -1,12 +1,8 @@
-/* File: src/main/resources/static/css/dashboard-style.css */
-
-/* Memberi bayangan dan menghilangkan border default pada kartu */
 .card {
     border: none;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-/* Style untuk garis warna di sisi kiri kartu ringkasan */
 .border-left-primary {
     border-left: .25rem solid #4e73df !important;
 }

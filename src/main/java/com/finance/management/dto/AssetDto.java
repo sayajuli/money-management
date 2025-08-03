@@ -14,15 +14,15 @@ import com.finance.management.model.AssetType;
 public class AssetDto {
 
     @NotNull(message = "Tipe aset tidak boleh kosong")
-    private AssetType type; // Dipilih dari dropdown (CASH, INVESTMENT, PROPERTY)
+    private AssetType type;
 
     @NotBlank(message = "Nama aset tidak boleh kosong")
-    private String name; // Contoh: "Tabungan BCA", "Saham BBCA", "Rumah Tinggal"
+    private String name;
 
     @NotNull(message = "Nilai aset tidak boleh kosong")
     @Positive(message = "Nilai aset harus positif")
     private BigDecimal currentValue;
 
     @PastOrPresent(message = "Tanggal perolehan tidak boleh di masa depan")
-    private LocalDate acquisitionDate; // Opsional
+    private LocalDate acquisitionDate;
 }
