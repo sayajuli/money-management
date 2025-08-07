@@ -23,13 +23,14 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/transactions}">Transaksi</a></li>
                     <li class="nav-item"><a class="nav-link active" th:href="@{/assets}">Aset</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/debts}">Utang</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/budgets}">Anggaran</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/reports}">Laporan</a></li>
                 </ul>
                 <div class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> Halo, <strong sec:authentication="name">User</strong>
+                            <i class="bi bi-person-circle"></i> Halo, <strong th:text="${user.name ?: #authentication.name}">User</strong>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" th:href="@{/profile}">Profil Saya</a></li>
@@ -57,16 +58,31 @@
         <!-- Form Filter -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
-                <form th:action="@{/assets}" method="get" class="row g-3 align-items-center">
-                    <div class="col-auto"><label for="typeFilter" class="form-label fw-bold">Filter Tipe:</label></div>
-                    <div class="col-md-4">
-                        <select class="form-select" id="typeFilter" name="type">
-                            <option value="">Semua Tipe</option>
-                            <option th:each="typeOpt : ${assetTypes}" th:value="${typeOpt}" th:text="${typeOpt.name()}"
-                                th:selected="${typeOpt == selectedType}"></option>
+                <form th:action="@{/assets}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="monthFilter" class="form-label fw-bold">Bulan:</label>
+                        <select class="form-select" id="monthFilter" name="month">
+                            <option th:each="m : ${#numbers.sequence(1, 12)}" th:value="${m}"
+                                    th:text="${#temporals.format(#temporals.create(2000, m, 1, 0, 0), 'MMMM')}"
+                                    th:selected="${m == selectedMonth}"></option>
                         </select>
                     </div>
-                    <div class="col-auto"><button type="submit" class="btn btn-primary">Filter</button></div>
+                    <div class="col-md-3">
+                        <label for="yearFilter" class="form-label fw-bold">Tahun:</label>
+                        <select class="form-select" id="yearFilter" name="year">
+                            <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="typeFilter" class="form-label fw-bold">Tipe Aset:</label>
+                        <select class="form-select" id="typeFilter" name="type">
+                            <option value="">Semua Tipe</option>
+                            <option th:each="typeOpt : ${assetTypes}" th:value="${typeOpt}" th:text="${typeOpt.name()}" th:selected="${typeOpt == selectedType}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -130,31 +146,40 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr th:each="asset : ${assets}">
+                                    <tr th:each="asset : ${assetPage.content}">
                                         <td class="fw-medium" th:text="${asset.name}"></td>
                                         <td><span class="badge text-bg-info" th:text="${asset.type.name()}"></span></td>
                                         <td th:text="${#numbers.formatCurrency(asset.currentValue)}"></td>
-                                        <td
-                                            th:text="${asset.acquisitionDate != null ? #temporals.format(asset.acquisitionDate, 'dd MMM yyyy') : '-'}">
-                                        </td>
+                                        <td th:text="${asset.acquisitionDate != null ? #temporals.format(asset.acquisitionDate, 'dd MMM yyyy') : '-'}"></td>
                                         <td>
-                                            <a th:href="@{/assets/edit/{id}(id=${asset.id})}"
-                                                class="btn btn-warning btn-sm me-1"><i
-                                                    class="bi bi-pencil-square"></i></a>
-                                            <form th:action="@{/assets/delete/{id}(id=${asset.id})}" method="post"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Yakin ingin menghapus aset ini?');">
-                                                <button type="submit" class="btn btn-danger btn-sm"><i
-                                                        class="bi bi-trash"></i></button>
-                                            </form>
+                                            <div class="d-flex align-items-center">
+                                                <a th:href="@{/assets/edit/{id}(id=${asset.id})}" class="btn btn-warning btn-sm me-1"><i class="bi bi-pencil-square"></i></a>
+                                                <form th:action="@{/assets/delete/{id}(id=${asset.id})}" method="post" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus aset ini?');">
+                                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
-                                    <tr th:if="${#lists.isEmpty(assets)}">
-                                        <td colspan="5" class="text-center">Belum ada aset yang dicatat.</td>
+                                    <tr th:if="${assetPage.empty}">
+                                        <td colspan="5" class="text-center">Tidak ada aset yang cocok dengan filter ini.</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        <!-- Kontrol Pagination -->
+                        <nav aria-label="Page navigation" th:if="${assetPage.totalPages > 1}">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item" th:classappend="${assetPage.first} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/assets(page=${assetPage.number}, type=${selectedType}, month=${selectedMonth}, year=${selectedYear})}"><span>&laquo;</span></a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(1, assetPage.totalPages)}" th:classappend="${i == assetPage.number + 1} ? 'active'">
+                                    <a class="page-link" th:href="@{/assets(page=${i}, type=${selectedType}, month=${selectedMonth}, year=${selectedYear})}" th:text="${i}"></a>
+                                </li>
+                                <li class="page-item" th:classappend="${assetPage.last} ? 'disabled'">
+                                    <a class="page-link" th:href="@{/assets(page=${assetPage.number + 2}, type=${selectedType}, month=${selectedMonth}, year=${selectedYear})}"><span>&raquo;</span></a>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
                 </div>
             </div>

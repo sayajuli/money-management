@@ -23,13 +23,14 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/transactions}">Transaksi</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/assets}">Aset</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/debts}">Utang</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/budgets}">Anggaran</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/reports}">Laporan</a></li>
                 </ul>
                 <div class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown"
                             aria-expanded="false">
-                            <i class="bi bi-person-circle"></i> Halo, <strong sec:authentication="name">User</strong>
+                            <i class="bi bi-person-circle"></i> Halo, <strong th:text="${user.name ?: #authentication.name}">User</strong>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" th:href="@{/profile}">Profil Saya</a></li>
@@ -98,6 +99,23 @@
                     </div>
                 </div>
             </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-info text-uppercase mb-1">Total Cicilan Bulan Ini</div>
+                                <div class="h5 mb-0 fw-bold text-gray-800" th:text="${#numbers.formatCurrency(totalCicilanBulanIni)}">Rp0</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="bi bi-calendar-check-fill fs-2 text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Kartu Total Utang -->
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card border-left-danger shadow h-100 py-2">
@@ -152,6 +170,36 @@
             </div>
         </div>
 
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-bold text-primary">Pelacakan Anggaran Bulan Ini</div>
+                    <div class="card-body">
+                        <!-- Pesan jika belum ada anggaran -->
+                        <div th:if="${#lists.isEmpty(budgetInfos)}" class="text-center text-muted p-3">
+                            <p class="mb-1">Anda belum mengatur anggaran untuk bulan ini.</p>
+                            <a th:href="@{/budgets}" class="btn btn-sm btn-outline-primary">Atur Anggaran Sekarang</a>
+                        </div>
+                        <!-- Daftar progress bar jika ada anggaran -->
+                        <div th:unless="${#lists.isEmpty(budgetInfos)}">
+                            <div th:each="info : ${budgetInfos}" class="mb-4">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="fw-bold" th:text="${info.budget.category}"></h6>
+                                    <span class="fw-bold"
+                                        th:text="${#numbers.formatCurrency(info.spentAmount)} + ' / ' + ${#numbers.formatCurrency(info.budget.amount)}"></span>
+                                </div>
+                                <div class="progress" role="progressbar" style="height: 20px;">
+                                    <div class="progress-bar" th:classappend="${info.progressBarColor}"
+                                        th:style="'width: ' + ${info.percentageSpent} + '%'"
+                                        th:text="${info.percentageSpent} + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Baris Grafik -->
         <div class="row mt-4">
             <div class="col-lg-12">
@@ -159,6 +207,32 @@
                     <div class="card-header fw-bold text-primary">Grafik Pengeluaran per Kategori</div>
                     <div class="card-body d-flex justify-content-center align-items-center" style="min-height: 350px;">
                         <canvas id="myPieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-bold text-primary">
+                        <i class="bi bi-lightbulb-fill"></i> Rekomendasi Untuk Anda
+                    </div>
+                    <div class="card-body">
+                        <!-- Pesan jika tidak ada rekomendasi -->
+                        <div th:if="${#lists.isEmpty(recommendations)}" class="text-center p-3">
+                            <p class="mb-1">Kondisi keuangan Anda terpantau baik! Terus pertahankan kebiasaan positif
+                                ini.</p>
+                        </div>
+
+                        <!-- Menampilkan setiap rekomendasi dinamis -->
+                        <div th:unless="${#lists.isEmpty(recommendations)}">
+                            <div th:each="rec : ${recommendations}" class="alert" th:classappend="${rec.colorClass}"
+                                role="alert">
+                                <h5 class="alert-heading" th:text="${rec.title}"></h5>
+                                <p th:text="${rec.message}"></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

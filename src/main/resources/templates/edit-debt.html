@@ -23,6 +23,7 @@
                     <li class="nav-item"><a class="nav-link" th:href="@{/transactions}">Transaksi</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/assets}">Aset</a></li>
                     <li class="nav-item"><a class="nav-link active" th:href="@{/debts}">Utang</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/budgets}">Anggaran</a></li>
                     <li class="nav-item"><a class="nav-link" th:href="@{/reports}">Laporan</a></li>
                 </ul>
                 <div class="navbar-nav">
@@ -60,6 +61,16 @@
                             th:field="*{remainingAmount}" required>
                         <div class="text-danger" th:if="${#fields.hasErrors('remainingAmount')}"
                             th:errors="*{remainingAmount}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="monthlyInstallment" class="form-label">Cicilan per Bulan</label>
+                        <input type="text" inputmode="numeric" class="form-control nominal-input"
+                            id="monthlyInstallment" th:field="*{monthlyInstallment}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dueDayOfMonth" class="form-label">Tgl Jatuh Tempo Bulanan</label>
+                        <input type="number" class="form-control" id="dueDayOfMonth" th:field="*{dueDayOfMonth}" min="1"
+                            max="31">
                     </div>
                     <div class="mb-3">
                         <label for="dueDate" class="form-label">Tanggal Jatuh Tempo</label>

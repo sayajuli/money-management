@@ -187,4 +187,19 @@ public class TransactionService {
         Transaction transaction = getTransactionByIdAndUsername(id, username);
         transactionRepository.delete(transaction);
     }
+
+        public Map<String, BigDecimal> getExpenseSummaryForMonth(String username, int year, int month) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        
+        return transactionRepository.findAllByUserIdAndTransactionDateBetween(user.getId(), startDate, endDate)
+                .stream()
+                .filter(tx -> tx.getType() == TransactionType.EXPENSE && tx.getAmount() != null)
+                .collect(Collectors.groupingBy(
+                        Transaction::getCategory,
+                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)
+                ));
+    }
 }

@@ -10,25 +10,26 @@
 </head>
 
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm position-sticky top-0 z-3">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" th:href="@{/dashboard}">💰 KeuanganKu</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span
+          class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item"><a class="nav-link" th:href="@{/dashboard}">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link" th:href="@{/transactions}">Transaksi</a></li>
           <li class="nav-item"><a class="nav-link" th:href="@{/assets}">Aset</a></li>
           <li class="nav-item"><a class="nav-link" th:href="@{/debts}">Utang</a></li>
+          <li class="nav-item"><a class="nav-link" th:href="@{/budgets}">Anggaran</a></li>
           <li class="nav-item"><a class="nav-link" th:href="@{/reports}">Laporan</a></li>
         </ul>
         <div class="navbar-nav">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown"
               aria-expanded="false">
-              <i class="bi bi-person-circle"></i> Halo, <strong sec:authentication="name">User</strong>
+              <i class="bi bi-person-circle"></i> Halo, <strong th:text="${user.name ?: #authentication.name}">User</strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" th:href="@{/profile}">Profil Saya</a></li>
@@ -54,15 +55,36 @@
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
     <div class="row">
-      <!-- Kolom Kiri: Informasi Akun -->
+      <!-- Kolom Kiri: Form Update Profil -->
       <div class="col-lg-5 mb-4">
         <div class="card shadow-sm">
           <div class="card-header fw-bold">Informasi Akun</div>
           <div class="card-body">
-            <p><strong>Username:</strong> <span th:text="${user.username}"></span></p>
-            <p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
-            <p><strong>Akun Dibuat:</strong> <span
-                th:text="${#temporals.format(user.createdAt, 'dd MMMM yyyy HH:mm')}"></span></p>
+            <form th:action="@{/profile/update}" method="post" th:object="${profileDto}">
+              <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" th:value="${#authentication.name}" disabled readonly>
+              </div>
+              <div class="mb-3">
+                <label for="name" class="form-label">Nama Lengkap</label>
+                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" th:field="*{email}" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+              </div>
+              <div class="mb-3">
+                <label for="riskProfile" class="form-label">Profil Risiko Investasi</label>
+                <select class="form-select" id="riskProfile" th:field="*{riskProfile}">
+                  <option value="">-- Pilih Profil Risiko --</option>
+                  <option th:each="profile : ${riskProfiles}" th:value="${profile}" th:text="${profile.displayName}">
+                  </option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Update Profil</button>
+            </form>
           </div>
         </div>
       </div>
@@ -89,7 +111,7 @@
                 <div class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}">
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+              <button type="submit" class="btn btn-primary">Simpan Password Baru</button>
             </form>
           </div>
         </div>

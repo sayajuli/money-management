@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.finance.management.dto.PasswordChangeDto;
+import com.finance.management.dto.ProfileUpdateDto;
 import com.finance.management.dto.UserRegistrationDto;
 import com.finance.management.model.User;
 import com.finance.management.repository.UserRepository;
@@ -55,6 +56,18 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
+
+        @Transactional
+    public void updateProfile(String username, ProfileUpdateDto dto) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
+        
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setRiskProfile(dto.getRiskProfile());
+        
         userRepository.save(user);
     }
 }

@@ -1,6 +1,10 @@
 package com.finance.management.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +20,9 @@ import com.finance.management.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,16 +69,24 @@ public class DebtService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
 
-        Debt debt = new Debt();
-        debt.setUser(user);
-        debt.setLenderName(debtDto.getLenderName());
-        debt.setInitialAmount(debtDto.getInitialAmount());
-        debt.setDueDate(debtDto.getDueDate());
+        // 1. Buat objek Debt (entity) yang baru dan kosong
+        Debt newDebt = new Debt();
 
-        debt.setRemainingAmount(debtDto.getInitialAmount());
-        debt.setStatus(DebtStatus.ACTIVE);
+        // 2. Pindahkan semua data dari DTO ke Entity
+        newDebt.setUser(user);
+        newDebt.setLenderName(debtDto.getLenderName());
+        newDebt.setInitialAmount(debtDto.getInitialAmount());
+        newDebt.setDueDate(debtDto.getDueDate());
+        // ===== MEMINDAHKAN DATA BARU =====
+        newDebt.setMonthlyInstallment(debtDto.getMonthlyInstallment());
+        newDebt.setDueDayOfMonth(debtDto.getDueDayOfMonth());
 
-        return debtRepository.save(debt);
+        // 3. Terapkan logika bisnis
+        newDebt.setRemainingAmount(debtDto.getInitialAmount());
+        newDebt.setStatus(DebtStatus.ACTIVE);
+
+        // 4. Simpan objek ENTITY (Debt) yang sudah lengkap ke database
+        return debtRepository.save(newDebt);
     }
 
     public List<Debt> getDebtsForUser(String username) {
@@ -107,6 +121,8 @@ public class DebtService {
         existingDebt.setRemainingAmount(updatedDebtData.getRemainingAmount());
         existingDebt.setDueDate(updatedDebtData.getDueDate());
         existingDebt.setStatus(updatedDebtData.getStatus());
+        existingDebt.setMonthlyInstallment(updatedDebtData.getMonthlyInstallment());
+        existingDebt.setDueDayOfMonth(updatedDebtData.getDueDayOfMonth());
 
         debtRepository.save(existingDebt);
     }
@@ -125,5 +141,49 @@ public class DebtService {
         if (!debt.getUser().getUsername().equals(username))
             throw new AccessDeniedException("Access denied");
         debtRepository.delete(debt);
+    }
+
+    public Page<Debt> findPaginatedByFilter(String username, int year, int month, DebtStatus status, int pageNo,
+            int pageSize) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize, Sort.by("dueDate").descending());
+
+        boolean isMonthFilterActive = (month != 0);
+        boolean isYearFilterActive = (year != 0);
+        boolean isStatusFilterActive = (status != null);
+
+        // Logika untuk menangani filter "Semua"
+        if (isMonthFilterActive && isYearFilterActive) {
+            YearMonth yearMonth = YearMonth.of(year, month);
+            LocalDate startDate = yearMonth.atDay(1);
+            LocalDate endDate = yearMonth.atEndOfMonth();
+            if (isStatusFilterActive) {
+                return debtRepository.findByUserIdAndStatusAndDueDateBetween(user.getId(), status, startDate, endDate,
+                        pageable);
+            } else {
+                return debtRepository.findByUserIdAndDueDateBetween(user.getId(), startDate, endDate, pageable);
+            }
+        } else { // Jika bulan atau tahun adalah "Semua"
+            if (isStatusFilterActive) {
+                return debtRepository.findByUserIdAndStatus(user.getId(), status, pageable);
+            } else {
+                return debtRepository.findByUserId(user.getId(), pageable);
+            }
+        }
+    }
+
+        public BigDecimal getTotalMonthlyInstallment(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
+
+        return debtRepository.findByUserId(user.getId()).stream()
+                // Filter hanya utang yang statusnya ACTIVE
+                .filter(debt -> debt.getStatus() == DebtStatus.ACTIVE)
+                // Ambil nilai cicilan bulanannya
+                .map(Debt::getMonthlyInstallment)
+                // Saring jika ada nilai yang null
+                .filter(Objects::nonNull)
+                // Jumlahkan semuanya
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

@@ -1,5 +1,7 @@
 package com.finance.management.controller;
 
+import com.finance.management.model.User;
+import com.finance.management.repository.UserRepository;
 import com.finance.management.service.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +27,13 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping
-    public String showReportPage(Model model) {
+    public String showReportPage(Model model, Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        model.addAttribute("user", user);
         model.addAttribute("selectedMonth", LocalDate.now().getMonthValue());
         model.addAttribute("selectedYear", LocalDate.now().getYear());
 

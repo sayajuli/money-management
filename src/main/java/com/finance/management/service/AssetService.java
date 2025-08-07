@@ -2,6 +2,10 @@ package com.finance.management.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +21,7 @@ import com.finance.management.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -146,6 +151,7 @@ public class AssetService {
                 });
 
         cashAsset.setCurrentValue(cashAsset.getCurrentValue().add(amount));
+        cashAsset.setAcquisitionDate(LocalDate.now());
         assetRepository.save(cashAsset);
     }
 
@@ -165,6 +171,7 @@ public class AssetService {
                 });
 
         cashAsset.setCurrentValue(cashAsset.getCurrentValue().subtract(amount));
+        cashAsset.setAcquisitionDate(LocalDate.now());
         assetRepository.save(cashAsset);
     }
 
@@ -173,5 +180,19 @@ public class AssetService {
         if (!asset.getUser().getUsername().equals(username))
             throw new AccessDeniedException("Access denied");
         assetRepository.delete(asset);
+    }
+
+        public Page<Asset> findPaginatedByMonth(String username, int year, int month, AssetType type, int pageNo, int pageSize) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize, Sort.by("acquisitionDate").descending());
+
+        if (type != null) {
+            return assetRepository.findByUserIdAndTypeAndAcquisitionDateBetween(user.getId(), type, startDate, endDate, pageable);
+        } else {
+            return assetRepository.findByUserIdAndAcquisitionDateBetween(user.getId(), startDate, endDate, pageable);
+        }
     }
 }

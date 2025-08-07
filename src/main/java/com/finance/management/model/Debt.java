@@ -39,6 +39,12 @@ public class Debt {
     @Column(name = "remaining_amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal remainingAmount;
 
+    @Column(name = "monthly_installment")
+    private BigDecimal monthlyInstallment;
+
+    @Column(name = "due_day_of_month")
+    private Integer dueDayOfMonth;
+
     @Column(name = "due_date")
     private LocalDate dueDate;
 

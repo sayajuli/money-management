@@ -1,6 +1,8 @@
 package com.finance.management.controller;
 
 import com.finance.management.model.Transaction;
+import com.finance.management.model.User;
+import com.finance.management.repository.UserRepository;
 import com.finance.management.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,9 @@ public class TransactionController {
     @Autowired
     private TransactionService transactionService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping
     public String showTransactionPage(@RequestParam(required = false) String category,
             @RequestParam(required = false) Integer month,
@@ -31,6 +36,7 @@ public class TransactionController {
             @RequestParam(defaultValue = "1") int page,
             Model model,
             Principal principal) {
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         String username = principal.getName();
         int pageSize = 10;
 
@@ -41,7 +47,7 @@ public class TransactionController {
 
         transactionPage = transactionService.findPaginatedByMonth(username, currentYear, currentMonth, category, page,
                 pageSize);
-
+        model.addAttribute("user", user);
         model.addAttribute("transactionPage", transactionPage);
         model.addAttribute("categories", transactionService.getUniqueCategories(username));
         model.addAttribute("selectedCategory", category);
